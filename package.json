@@ -14,7 +14,9 @@
   "license": "ISC",
   "dependencies": {
     "dotenv": "^16.4.5",
-    "fastify": "^4.26.2"
+    "fastify": "^4.26.2",
+    "fastify-plugin": "^4.5.1",
+    "neo4j-driver": "^5.18.0"
   },
   "devDependencies": {
     "@types/node": "^20.11.25",

@@ -13,12 +13,7 @@ app.register(neo4jPlugin, {
   password: process.env.NEO4J_PASSWORD || "",
 });
 
-app.get("/", async (request, reply) => {
-  const session = app.neo4j.driver.session();
-  const result = await session.run("MATCH (n) RETURN n LIMIT 10");
-
-  return { data: result.records };
-});
+app.register(import("./routes/v1/search"), { prefix: "v1" });
 
 const start = async () => {
   try {

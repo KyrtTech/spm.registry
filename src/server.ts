@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 import fastify from "fastify";
 
-import neo4jPlugin from "./neo4jPlugin";
+import neo4jPlugin from "./plugins/neo4j";
 
 dotenv.config();
 

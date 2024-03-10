@@ -7,6 +7,47 @@ dotenv.config();
 
 const app = fastify({ logger: true });
 
+app.register(require("@fastify/swagger"), {
+  openapi: {
+    info: {
+      title: "SPM Registry",
+      description: "Doc for SPM REST API",
+      version: "0.1.0",
+    },
+    servers: [
+      {
+        url: "http://localhost",
+      },
+    ],
+    components: {
+      securitySchemes: {},
+    },
+  },
+  hideUntagged: true,
+});
+
+app.register(require("@fastify/swagger-ui"), {
+  routePrefix: "/docs",
+  uiConfig: {
+    docExpansion: "full",
+    deepLinking: false,
+  },
+  uiHooks: {
+    onRequest: function (request: any, reply: any, next: () => void) {
+      next();
+    },
+    preHandler: function (request: any, reply: any, next: () => void) {
+      next();
+    },
+  },
+  staticCSP: true,
+  transformStaticCSP: (header: any) => header,
+  transformSpecification: (swaggerObject: any, request: any, reply: any) => {
+    return swaggerObject;
+  },
+  transformSpecificationClone: true,
+});
+
 app.register(neo4jPlugin, {
   uri: process.env.NEO4J_URI || "",
   user: process.env.NEO4J_USER || "",

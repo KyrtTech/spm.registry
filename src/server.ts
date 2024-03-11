@@ -23,7 +23,7 @@ app.register(require("@fastify/swagger"), {
       securitySchemes: {},
     },
   },
-  hideUntagged: true,
+  hideUntagged: false,
 });
 
 app.register(require("@fastify/swagger-ui"), {

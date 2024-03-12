@@ -39,6 +39,42 @@ const searchSchema = {
   },
 };
 
+interface IFindStrategyQuery {
+  application: string;
+  infra: string;
+}
+
+const findInstallStrategySchema = {
+  querystring: {
+    type: "object",
+    properties: {
+      application: { type: "string" },
+      infra: { type: "string" },
+    },
+    required: ["infra", "application"],
+    additionalProperties: false,
+  },
+  response: {
+    200: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          title: { type: "string" },
+          description: { type: "string" },
+          uri: { type: "string" },
+          scripts: {
+            type: "array",
+            items: {
+              type: "string",
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
 const searchParamsToNeo4j = (
   type: "platform" | "install-strategy" | "infra-provider",
   name: string
@@ -88,6 +124,38 @@ const route = async function (fastify: FastifyInstance) {
       });
 
       return mapped;
+    }
+  );
+
+  fastify.get<{ Querystring: IFindStrategyQuery }>(
+    "/find-install-strategy",
+    { schema: findInstallStrategySchema },
+    async (req, resp) => {
+      const session = fastify.neo4j.driver.session();
+
+      const { application, infra } = req.query;
+
+      const neo4jResult = await session.run(
+        "MATCH (strategy)-[:`http://the-spm.org/schema#targetsApplication`]->(application), (strategy)-[:`http://the-spm.org/schema#usesInfrastructureProvider`]->(infra), (strategy)-[:`http://the-spm.org/schema#installScripts`]->(script) WHERE application.uri = $application AND infra.uri = $infra RETURN strategy, COLLECT(script) as scripts",
+        {
+          application: "http://the-spm.org/entities/platforms/" + application,
+          infra: "http://the-spm.org/entities/cloud_providers/" + infra,
+        }
+      );
+
+      const result = neo4jResult.records.map((result) => {
+        const strategy = result.get("strategy");
+        const scripts = result.get("scripts");
+
+        return {
+          title: strategy.properties["http://purl.org/dc/terms/title"],
+          description:
+            strategy.properties["http://purl.org/dc/terms/description"],
+          scripts: scripts.map((script: any) => script.properties["uri"]),
+        };
+      });
+
+      return result;
     }
   );
 };

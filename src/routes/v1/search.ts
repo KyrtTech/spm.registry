@@ -63,6 +63,7 @@ const findInstallStrategySchema = {
           title: { type: "string" },
           description: { type: "string" },
           uri: { type: "string" },
+          downloadURL: { type: "string" },
           scripts: {
             type: "array",
             items: {
@@ -202,16 +203,38 @@ const route = async function (fastify: FastifyInstance) {
         new Map<string, any>()
       );
 
-      return Array(...installStrategiesWithScripts.values()).map(
-        (strategy: any) => {
-          return {
-            title: strategy.properties["http://purl.org/dc/terms/title"],
-            description:
-              strategy.properties["http://purl.org/dc/terms/description"],
-            scripts: strategy.scripts,
-          };
-        }
-      );
+      //  add downloadURL to install strategies if available
+      const strategies = Array(...installStrategiesWithScripts.values());
+
+      strategies.forEach((strategy) => {
+        //  find a link between this strategy and the application
+        const id = strategy.elementId;
+
+        const targetAppSegment = deduped.find(
+          (segment) =>
+            segment.relationship.type ===
+              "http://the-spm.org/schema#targetsApplication" &&
+            (segment.start.elementId === id || segment.end.elementId === id)
+        );
+
+        strategy.downloadURL =
+          targetAppSegment.start.properties[
+            "http://the-spm.org/schema#downloadURL"
+          ]?.[0] ||
+          targetAppSegment.end.properties[
+            "http://the-spm.org/schema#downloadURL"
+          ]?.[0];
+      });
+
+      return strategies.map((strategy: any) => {
+        return {
+          title: strategy.properties["http://purl.org/dc/terms/title"],
+          description:
+            strategy.properties["http://purl.org/dc/terms/description"],
+          downloadURL: strategy.downloadURL,
+          scripts: strategy.scripts,
+        };
+      });
     }
   );
 };

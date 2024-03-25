@@ -136,26 +136,82 @@ const route = async function (fastify: FastifyInstance) {
       const { application, infra } = req.query;
 
       const neo4jResult = await session.run(
-        "MATCH (strategy)-[:`http://the-spm.org/schema#targetsApplication`]->(application), (strategy)-[:`http://the-spm.org/schema#usesInfrastructureProvider`]->(infra), (strategy)-[:`http://the-spm.org/schema#installScripts`]->(script) WHERE application.uri = $application AND infra.uri = $infra RETURN strategy, COLLECT(script) as scripts",
+        `
+          MATCH (start) WHERE start.uri = $application
+          MATCH (end) WHERE end.uri = $infra
+          WITH start, COLLECT(end) as end
+          CALL apoc.path.spanningTree(start, {
+              relationshipFilter: "\`http://the-spm.org/schema#targetsApplication\`|\`http://the-spm.org/schema#usesInfrastructureProvider\`|\`http://the-spm.org/schema#dependsOnSemanticApp\`",
+              terminatorNodes: end
+          } )
+          YIELD path
+          MATCH (n)
+          WHERE n IN nodes(path)
+          CALL apoc.path.expand(n, "\`http://the-spm.org/schema#targetsApplication\`|\`http://the-spm.org/schema#usesInfrastructureProvider\`|\`http://the-spm.org/schema#installScripts\`" , null, 1, 2) YIELD path as finalPath
+          RETURN finalPath as path
+        `,
         {
-          application: "http://the-spm.org/entities/platforms/" + application,
+          application: "http://the-spm.org/entities/services/" + application,
           infra: "http://the-spm.org/entities/cloud_providers/" + infra,
         }
       );
 
-      const result = neo4jResult.records.map((result) => {
-        const strategy = result.get("strategy");
-        const scripts = result.get("scripts");
+      const reduced = neo4jResult.records.reduce((acc, current) => {
+        for (const segment of current.get("path")?.segments) {
+          const relId: string = segment.relationship?.elementId || "";
 
-        return {
-          title: strategy.properties["http://purl.org/dc/terms/title"],
-          description:
-            strategy.properties["http://purl.org/dc/terms/description"],
-          scripts: scripts.map((script: any) => script.properties["uri"]),
-        };
-      });
+          if (!acc.has(relId)) {
+            acc.set(relId, []);
+          }
 
-      return result;
+          acc.get(relId)?.push(segment);
+        }
+
+        return acc;
+      }, new Map<string, any[]>());
+
+      const deduped = Array(...reduced.values()).map((el) => el[0]);
+
+      const installStrategiesAndScripts = deduped.filter((segment) =>
+        segment.start.labels.find(
+          (l: string) => l === "http://the-spm.org/schema#InstallStrategy"
+        )
+      );
+
+      const installStrategiesWithScripts = installStrategiesAndScripts.reduce(
+        (acc, segment) => {
+          if (!acc.has(segment.start.elementId)) {
+            acc.set(segment.start.elementId, segment.start);
+          }
+
+          const start = acc.get(segment.start.elementId);
+
+          if (
+            segment.relationship.type ===
+            "http://the-spm.org/schema#installScripts"
+          ) {
+            if (!start.scripts) {
+              start.scripts = [];
+            }
+
+            start.scripts.push(segment.end.properties["uri"]);
+          }
+
+          return acc;
+        },
+        new Map<string, any>()
+      );
+
+      return Array(...installStrategiesWithScripts.values()).map(
+        (strategy: any) => {
+          return {
+            title: strategy.properties["http://purl.org/dc/terms/title"],
+            description:
+              strategy.properties["http://purl.org/dc/terms/description"],
+            scripts: strategy.scripts,
+          };
+        }
+      );
     }
   );
 };

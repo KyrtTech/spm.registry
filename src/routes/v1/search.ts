@@ -62,8 +62,8 @@ const findInstallStrategySchema = {
         properties: {
           title: { type: "string" },
           description: { type: "string" },
-          uri: { type: "string" },
           downloadURL: { type: "string" },
+          optionalParams: { type: "array", items: { type: "string" } },
           scripts: {
             type: "array",
             items: {
@@ -71,6 +71,7 @@ const findInstallStrategySchema = {
             },
           },
         },
+        required: ["title", "description", "scripts", "optionalParams"],
       },
     },
   },
@@ -148,7 +149,7 @@ const route = async function (fastify: FastifyInstance) {
           YIELD path
           MATCH (n)
           WHERE n IN nodes(path)
-          CALL apoc.path.expand(n, "\`http://the-spm.org/schema#targetsApplication\`|\`http://the-spm.org/schema#usesInfrastructureProvider\`|\`http://the-spm.org/schema#installScripts\`" , null, 1, 2) YIELD path as finalPath
+          CALL apoc.path.expand(n, "\`http://the-spm.org/schema#targetsApplication\`|\`http://the-spm.org/schema#usesInfrastructureProvider\`|\`http://the-spm.org/schema#installScripts\`|\`http://the-spm.org/schema#optionalParam\`" , null, 1, 2) YIELD path as finalPath
           RETURN finalPath as path
         `,
         {
@@ -198,6 +199,17 @@ const route = async function (fastify: FastifyInstance) {
             start.scripts.push(segment.end.properties["uri"]);
           }
 
+          if (
+            segment.relationship.type ===
+            "http://the-spm.org/schema#optionalParam"
+          ) {
+            if (!start.optionalParams) {
+              start.optionalParams = [];
+            }
+
+            start.optionalParams.push(segment.end.properties["uri"]);
+          }
+
           return acc;
         },
         new Map<string, any>()
@@ -233,6 +245,7 @@ const route = async function (fastify: FastifyInstance) {
             strategy.properties["http://purl.org/dc/terms/description"],
           downloadURL: strategy.downloadURL,
           scripts: strategy.scripts,
+          optionalParams: strategy.optionalParams || [],
         };
       });
     }

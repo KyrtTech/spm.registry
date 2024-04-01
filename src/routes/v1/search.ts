@@ -1,81 +1,14 @@
 import { FastifyInstance } from "fastify";
 
-interface ISearchQuery {
-  name: string;
-  type: "platform" | "install-strategy" | "infra-provider";
-}
+import {
+  IFindStrategyQuery,
+  findInstallStrategySchema,
+} from "../../schemas/install-strategy";
 
-const searchSchema = {
-  querystring: {
-    type: "object",
-    properties: {
-      name: { type: "string" },
-      type: {
-        type: "string",
-        enum: ["platform", "install-strategy", "infra-provider"],
-      },
-    },
-    required: ["name", "type"],
-    additionalProperties: false,
-  },
-  response: {
-    200: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          id: {
-            type: "string",
-          },
-          labels: {
-            type: "array",
-          },
-          uri: {
-            type: "string",
-          },
-        },
-      },
-    },
-  },
-};
-
-interface IFindStrategyQuery {
-  application: string;
-  infra: string;
-}
-
-const findInstallStrategySchema = {
-  querystring: {
-    type: "object",
-    properties: {
-      application: { type: "string" },
-      infra: { type: "string" },
-    },
-    required: ["infra", "application"],
-    additionalProperties: false,
-  },
-  response: {
-    200: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          title: { type: "string" },
-          description: { type: "string" },
-          downloadURL: { type: "string" },
-          optionalParams: { type: "array", items: { type: "string" } },
-          scripts: {
-            type: "array",
-            items: {
-              type: "string",
-            },
-          },
-        },
-        required: ["title", "description", "scripts", "optionalParams"],
-      },
-    },
-  },
-};
+import {
+  ISearchQuery,
+  searchSchema
+} from "../../schemas/search";
 
 const searchParamsToNeo4j = (
   type: "platform" | "install-strategy" | "infra-provider",

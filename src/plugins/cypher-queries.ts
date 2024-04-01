@@ -1,18 +1,25 @@
 import fs from "node:fs/promises";
 import fp from "fastify-plugin";
 
+type Queries = {
+  "install-strategy": string;
+};
+
 // Plugin to read cypher queries from fs
 const cypherQueriesPlugin = fp(
   async (fastify, opts: Record<string, string>) => {
     const files = await fs.readdir("./src/queries", { withFileTypes: true });
 
-    const queries: Record<string, string> = {};
+    const queries: Queries = {
+      "install-strategy": "",
+    };
 
     for await (const file of files) {
       const fileName = file.name;
 
       const content = await fs.readFile("./src/queries/" + fileName);
-      queries[fileName.split(".")[0]] = content.toString("utf-8");
+      (queries as unknown as Record<string, string>)[fileName.split(".")[0]] =
+        content.toString("utf-8");
     }
 
     fastify.decorate("cypherQueries", { queries });
@@ -25,7 +32,7 @@ export default cypherQueriesPlugin;
 declare module "fastify" {
   export interface FastifyInstance {
     cypherQueries: {
-      queries: Record<string, string>;
+      queries: Queries;
     };
   }
 }

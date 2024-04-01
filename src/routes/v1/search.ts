@@ -197,6 +197,17 @@ const route = async function (fastify: FastifyInstance) {
             start.optionalParams.push(segment.end.properties["uri"]);
           }
 
+          if (
+            segment.relationship.type ===
+            "http://the-spm.org/schema#requiresParam"
+          ) {
+            if (!start.requiredParams) {
+              start.requiredParams = [];
+            }
+
+            start.requiredParams.push(segment.end.properties["uri"]);
+          }
+
           return acc;
         },
         new Map<string, any>()

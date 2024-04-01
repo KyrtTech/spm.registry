@@ -5,10 +5,7 @@ import {
   findInstallStrategySchema,
 } from "../../schemas/install-strategy";
 
-import {
-  ISearchQuery,
-  searchSchema
-} from "../../schemas/search";
+import { ISearchQuery, searchSchema } from "../../schemas/search";
 
 const searchParamsToNeo4j = (
   type: "platform" | "install-strategy" | "infra-provider",

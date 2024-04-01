@@ -138,20 +138,7 @@ const route = async function (fastify: FastifyInstance) {
       const { application, infra } = req.query;
 
       const neo4jResult = await session.run(
-        `
-          MATCH (start) WHERE start.uri = $application
-          MATCH (end) WHERE end.uri = $infra
-          WITH start, COLLECT(end) as end
-          CALL apoc.path.spanningTree(start, {
-              relationshipFilter: "\`http://the-spm.org/schema#targetsApplication\`|\`http://the-spm.org/schema#usesInfrastructureProvider\`|\`http://the-spm.org/schema#dependsOnSemanticApp\`",
-              terminatorNodes: end
-          } )
-          YIELD path
-          MATCH (n)
-          WHERE n IN nodes(path)
-          CALL apoc.path.expand(n, "\`http://the-spm.org/schema#targetsApplication\`|\`http://the-spm.org/schema#usesInfrastructureProvider\`|\`http://the-spm.org/schema#installScripts\`|\`http://the-spm.org/schema#optionalParam\`" , null, 1, 2) YIELD path as finalPath
-          RETURN finalPath as path
-        `,
+        fastify.cypherQueries.queries["install-strategy"],
         {
           application: "http://the-spm.org/entities/services/" + application,
           infra: "http://the-spm.org/entities/cloud_providers/" + infra,

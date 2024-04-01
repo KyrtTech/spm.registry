@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 import fastify from "fastify";
 
 import neo4jPlugin from "./plugins/neo4j";
+import cypherQueriesPlugin from "./plugins/cypher-queries";
 
 dotenv.config();
 
@@ -53,6 +54,7 @@ app.register(neo4jPlugin, {
   user: process.env.NEO4J_USER || "",
   password: process.env.NEO4J_PASSWORD || "",
 });
+app.register(cypherQueriesPlugin);
 
 app.register(import("./routes/v1/search"), { prefix: "v1" });
 

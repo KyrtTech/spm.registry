@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import fp from "fastify-plugin";
 
-// Plugin to connect to Neo4j
+// Plugin to read cypher queries from fs
 const cypherQueriesPlugin = fp(
   async (fastify, opts: Record<string, string>) => {
     const files = await fs.readdir("./src/queries", { withFileTypes: true });

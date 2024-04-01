@@ -29,6 +29,21 @@ const searchParamsToNeo4j = (
   };
 };
 
+const addExtraRelInfo = (
+  relType: string,
+  node: any,
+  segment: any,
+  key: string
+) => {
+  if (segment.relationship.type === relType) {
+    if (!node[key]) {
+      node[key] = [];
+    }
+
+    node[key].push(segment.end.properties["uri"]);
+  }
+};
+
 const route = async function (fastify: FastifyInstance) {
   fastify.get<{ Querystring: ISearchQuery }>(
     "/search",
@@ -105,38 +120,26 @@ const route = async function (fastify: FastifyInstance) {
 
           const start = acc.get(segment.start.elementId);
 
-          if (
-            segment.relationship.type ===
-            "http://the-spm.org/schema#installScripts"
-          ) {
-            if (!start.scripts) {
-              start.scripts = [];
-            }
+          addExtraRelInfo(
+            "http://the-spm.org/schema#installScripts",
+            start,
+            segment,
+            "scripts"
+          );
 
-            start.scripts.push(segment.end.properties["uri"]);
-          }
+          addExtraRelInfo(
+            "http://the-spm.org/schema#optionalParam",
+            start,
+            segment,
+            "optionalParams"
+          );
 
-          if (
-            segment.relationship.type ===
-            "http://the-spm.org/schema#optionalParam"
-          ) {
-            if (!start.optionalParams) {
-              start.optionalParams = [];
-            }
-
-            start.optionalParams.push(segment.end.properties["uri"]);
-          }
-
-          if (
-            segment.relationship.type ===
-            "http://the-spm.org/schema#requiresParam"
-          ) {
-            if (!start.requiredParams) {
-              start.requiredParams = [];
-            }
-
-            start.requiredParams.push(segment.end.properties["uri"]);
-          }
+          addExtraRelInfo(
+            "http://the-spm.org/schema#requiresParam",
+            start,
+            segment,
+            "requiredParams"
+          );
 
           return acc;
         },

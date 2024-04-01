@@ -6,6 +6,14 @@ import {
 } from "../../schemas/install-strategy";
 
 import { ISearchQuery, searchSchema } from "../../schemas/search";
+import { Node, PathSegment } from "neo4j-driver";
+
+type StrategyAddOn = {
+  scripts?: String[];
+  optionalParams?: String[];
+  requiredParams?: String[];
+};
+type Strategy = Node & StrategyAddOn & { downloadURL?: String };
 
 const searchParamsToNeo4j = (
   type: "platform" | "install-strategy" | "infra-provider",
@@ -31,16 +39,18 @@ const searchParamsToNeo4j = (
 
 const addExtraRelInfo = (
   relType: string,
-  node: any,
-  segment: any,
-  key: string
+  node: Strategy,
+  segment: PathSegment,
+  key: keyof StrategyAddOn
 ) => {
   if (segment.relationship.type === relType) {
     if (!node[key]) {
       node[key] = [];
     }
 
-    node[key].push(segment.end.properties["uri"]);
+    const whereToPush = node[key] || [];
+
+    whereToPush.push(segment.end.properties["uri"]);
   }
 };
 
@@ -102,14 +112,15 @@ const route = async function (fastify: FastifyInstance) {
         }
 
         return acc;
-      }, new Map<string, any[]>());
+      }, new Map<string, PathSegment[]>());
 
       const deduped = Array(...reduced.values()).map((el) => el[0]);
 
-      const installStrategiesAndScripts = deduped.filter((segment) =>
-        segment.start.labels.find(
-          (l: string) => l === "http://the-spm.org/schema#InstallStrategy"
-        )
+      const installStrategiesAndScripts: PathSegment[] = deduped.filter(
+        (segment) =>
+          segment.start.labels.find(
+            (l: string) => l === "http://the-spm.org/schema#InstallStrategy"
+          )
       );
 
       const installStrategiesWithScripts = installStrategiesAndScripts.reduce(
@@ -119,6 +130,10 @@ const route = async function (fastify: FastifyInstance) {
           }
 
           const start = acc.get(segment.start.elementId);
+
+          if (!start) {
+            return acc;
+          }
 
           addExtraRelInfo(
             "http://the-spm.org/schema#installScripts",
@@ -143,7 +158,7 @@ const route = async function (fastify: FastifyInstance) {
 
           return acc;
         },
-        new Map<string, any>()
+        new Map<string, Strategy>()
       );
 
       //  add downloadURL to install strategies if available
@@ -161,15 +176,15 @@ const route = async function (fastify: FastifyInstance) {
         );
 
         strategy.downloadURL =
-          targetAppSegment.start.properties[
+          targetAppSegment?.start.properties[
             "http://the-spm.org/schema#downloadURL"
           ]?.[0] ||
-          targetAppSegment.end.properties[
+          targetAppSegment?.end.properties[
             "http://the-spm.org/schema#downloadURL"
           ]?.[0];
       });
 
-      return strategies.map((strategy: any) => {
+      return strategies.map((strategy) => {
         return {
           title: strategy.properties["http://purl.org/dc/terms/title"],
           description:

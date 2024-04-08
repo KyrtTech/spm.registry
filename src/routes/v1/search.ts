@@ -72,6 +72,10 @@ const route = async function (fastify: FastifyInstance) {
         { uri: params.uri }
       );
 
+      if (result.records.length === 0) {
+        return resp.code(404).send('');
+      }
+
       const mapped = result.records.map((record) => {
         const node = record.get("n");
 

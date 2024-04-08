@@ -114,7 +114,15 @@ const route = async function (fastify: FastifyInstance) {
         return acc;
       }, new Map<string, PathSegment[]>());
 
-      const deduped = Array(...reduced.values()).map((el) => el[0]);
+      const deduped = Array(...reduced.values()).map((el) => {
+        if (el[0].relationship.startNodeElementId !== el[0].start.elementId) {
+          const tmp = el[0].start;
+          el[0].start = el[0].end;
+          el[0].end = tmp;
+        }
+
+        return el[0];
+      });
 
       const installStrategiesAndScripts: PathSegment[] = deduped.filter(
         (segment) =>

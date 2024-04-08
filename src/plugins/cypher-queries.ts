@@ -3,6 +3,7 @@ import fp from "fastify-plugin";
 
 type Queries = {
   "install-strategy": string;
+  "get-runner": string;
 };
 
 // Plugin to read cypher queries from fs
@@ -12,6 +13,7 @@ const cypherQueriesPlugin = fp(
 
     const queries: Queries = {
       "install-strategy": "",
+      "get-runner": "",
     };
 
     for await (const file of files) {

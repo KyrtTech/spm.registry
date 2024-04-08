@@ -196,7 +196,7 @@ const route = async function (fastify: FastifyInstance) {
           (segment) =>
             segment.relationship.type ===
               "http://the-spm.org/schema#targetsApplication" &&
-            (segment.start.elementId === id || segment.end.elementId === id)
+            segment.start.elementId === id
         );
 
         strategy.downloadURL =

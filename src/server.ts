@@ -57,6 +57,7 @@ app.register(neo4jPlugin, {
 app.register(cypherQueriesPlugin);
 
 app.register(import("./routes/v1/search"), { prefix: "v1" });
+app.register(import("./routes/v1/runner"), { prefix: "v1" });
 
 const start = async () => {
   try {

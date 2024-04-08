@@ -73,7 +73,7 @@ const route = async function (fastify: FastifyInstance) {
       );
 
       if (result.records.length === 0) {
-        return resp.code(404).send('');
+        return resp.code(404).send("");
       }
 
       const mapped = result.records.map((record) => {
@@ -217,6 +217,7 @@ const route = async function (fastify: FastifyInstance) {
           title: strategy.properties["http://purl.org/dc/terms/title"],
           description:
             strategy.properties["http://purl.org/dc/terms/description"],
+          uri: strategy.properties.uri,
           downloadURL: strategy.downloadURL,
           scripts: strategy.scripts,
           optionalParams: strategy.optionalParams || [],

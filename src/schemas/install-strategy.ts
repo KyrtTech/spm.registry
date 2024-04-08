@@ -23,6 +23,7 @@ export const findInstallStrategySchema = {
           description: { type: "string" },
           downloadURL: { type: "string" },
           optionalParams: { type: "array", items: { type: "string" } },
+          runner: { type: "string" },
           scripts: {
             type: "array",
             items: {

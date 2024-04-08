@@ -12,6 +12,7 @@ type StrategyAddOn = {
   scripts?: String[];
   optionalParams?: String[];
   requiredParams?: String[];
+  producesParams?: String[];
   runner?: String[];
 };
 type Strategy = Node & StrategyAddOn & { downloadURL?: String };
@@ -172,6 +173,13 @@ const route = async function (fastify: FastifyInstance) {
             "runner"
           );
 
+          addExtraRelInfo(
+            "http://the-spm.org/schema#producesParam",
+            start,
+            segment,
+            "producesParams"
+          );
+
           return acc;
         },
         new Map<string, Strategy>()
@@ -208,6 +216,7 @@ const route = async function (fastify: FastifyInstance) {
           downloadURL: strategy.downloadURL,
           scripts: strategy.scripts,
           optionalParams: strategy.optionalParams || [],
+          producesParams: strategy.producesParams || [],
           runner: strategy.runner?.[0],
         };
       });

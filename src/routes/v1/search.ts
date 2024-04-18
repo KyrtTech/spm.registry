@@ -8,14 +8,26 @@ import {
 import { ISearchQuery, searchSchema } from "../../schemas/search";
 import { Node, PathSegment } from "neo4j-driver";
 
-type StrategyAddOn = {
-  scripts?: String[];
-  optionalParams?: String[];
-  requiredParams?: String[];
-  producesParams?: String[];
-  runner?: String[];
+type StrategyArg = {
+  name: string;
+  param: string;
+  description?: string;
 };
-type Strategy = Node & StrategyAddOn & { downloadURL?: String };
+
+type StrategyAddOn = {
+  scripts?: string[];
+  producesParams?: string[];
+  runner?: string[];
+};
+
+type StrategyAddOnArgs = {
+  optionalArgs?: StrategyArg[];
+  requiredArgs?: StrategyArg[];
+};
+
+type Strategy = Node &
+  StrategyAddOn &
+  StrategyAddOnArgs & { downloadURL?: string };
 
 const searchParamsToNeo4j = (
   type: "platform" | "install-strategy" | "infra-provider",
@@ -53,6 +65,50 @@ const addExtraRelInfo = (
     const whereToPush = node[key] || [];
 
     whereToPush.push(segment.end.properties["uri"]);
+  }
+};
+
+const addArgInfo = (
+  relType: string,
+  node: Strategy,
+  segment: PathSegment,
+  key: keyof StrategyAddOnArgs,
+  deduped: PathSegment[]
+) => {
+  if (segment.relationship.type === relType) {
+    if (!node[key]) {
+      node[key] = [];
+    }
+
+    const whereToPush = node[key] || [];
+
+    const argNode = segment.end;
+
+    //  find param rel
+    const paramLink = deduped.filter(
+      (s) =>
+        s.relationship.type === "http://the-spm.org/schema#argumentType" &&
+        (s.start.elementId === argNode.elementId ||
+          s.end.elementId === argNode.elementId)
+    );
+
+    const newElem: StrategyArg = {
+      name: segment.end.properties["uri"],
+      param: "",
+    };
+
+    if (paramLink[0]) {
+      const paramNode =
+        paramLink[0].start.elementId === argNode.elementId
+          ? paramLink[0].end
+          : paramLink[0].start;
+
+      newElem.param = paramNode.properties["uri"];
+      newElem.description =
+        argNode.properties["http://the-spm.org/schema#argumentDescription"]?.[0];
+    }
+
+    whereToPush.push(newElem);
   }
 };
 
@@ -156,18 +212,20 @@ const route = async function (fastify: FastifyInstance) {
             "scripts"
           );
 
-          addExtraRelInfo(
-            "http://the-spm.org/schema#optionalParam",
+          addArgInfo(
+            "http://the-spm.org/schema#optionalArgument",
             start,
             segment,
-            "optionalParams"
+            "optionalArgs",
+            deduped
           );
 
-          addExtraRelInfo(
-            "http://the-spm.org/schema#requiresParam",
+          addArgInfo(
+            "http://the-spm.org/schema#requiresArgument",
             start,
             segment,
-            "requiredParams"
+            "requiredArgs",
+            deduped
           );
 
           addExtraRelInfo(
@@ -220,7 +278,7 @@ const route = async function (fastify: FastifyInstance) {
           uri: strategy.properties.uri,
           downloadURL: strategy.downloadURL,
           scripts: strategy.scripts,
-          optionalParams: strategy.optionalParams || [],
+          optionalParams: strategy.optionalArgs || [],
           producesParams: strategy.producesParams || [],
           runner: strategy.runner?.[0],
         };

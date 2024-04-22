@@ -3,6 +3,22 @@ export interface IFindStrategyQuery {
   infra: string;
 }
 
+export type StrategyOutput = {
+  title: string;
+  description: string;
+  uri: string;
+  downloadURL: string | undefined;
+  scripts: string[] | undefined;
+  optionalParams: {
+    name: string;
+    param: string;
+    description?: string;
+  }[];
+  producesParams: string[];
+  alternatives: StrategyOutput[];
+  runner: string | undefined;
+};
+
 export const findInstallStrategySchema = {
   querystring: {
     type: "object",

@@ -33,6 +33,7 @@ export const findInstallStrategySchema = {
     200: {
       type: "array",
       items: {
+        $id: "strategyOutput",
         type: "object",
         properties: {
           title: { type: "string" },
@@ -52,6 +53,10 @@ export const findInstallStrategySchema = {
             },
           },
           producesParams: { type: "array", items: { type: "string" } },
+          alternatives: {
+            type: "array",
+            items: { $ref: "strategyOutput" },
+          },
           runner: { type: "string" },
           scripts: {
             type: "array",

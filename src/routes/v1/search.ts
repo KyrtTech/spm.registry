@@ -2,32 +2,22 @@ import { FastifyInstance } from "fastify";
 
 import {
   IFindStrategyQuery,
+  StrategyOutput,
   findInstallStrategySchema,
 } from "../../schemas/install-strategy";
 
 import { ISearchQuery, searchSchema } from "../../schemas/search";
 import { Node, PathSegment } from "neo4j-driver";
-
-type StrategyArg = {
-  name: string;
-  param: string;
-  description?: string;
-};
-
-type StrategyAddOn = {
-  scripts?: string[];
-  producesParams?: string[];
-  runner?: string[];
-};
-
-type StrategyAddOnArgs = {
-  optionalArgs?: StrategyArg[];
-  requiredArgs?: StrategyArg[];
-};
+import {
+  findPaths,
+  StrategyAddOn,
+  StrategyArg,
+  StrategyArgs,
+} from "../../graph/strategy";
 
 type Strategy = Node &
   StrategyAddOn &
-  StrategyAddOnArgs & { downloadURL?: string };
+  StrategyArgs & { downloadURL?: string; id: string };
 
 const searchParamsToNeo4j = (
   type: "platform" | "install-strategy" | "infra-provider",
@@ -72,7 +62,7 @@ const addArgInfo = (
   relType: string,
   node: Strategy,
   segment: PathSegment,
-  key: keyof StrategyAddOnArgs,
+  key: keyof StrategyArgs,
   deduped: PathSegment[]
 ) => {
   if (segment.relationship.type === relType) {
@@ -105,7 +95,9 @@ const addArgInfo = (
 
       newElem.param = paramNode.properties["uri"];
       newElem.description =
-        argNode.properties["http://the-spm.org/schema#argumentDescription"]?.[0];
+        argNode.properties[
+          "http://the-spm.org/schema#argumentDescription"
+        ]?.[0];
     }
 
     whereToPush.push(newElem);
@@ -196,7 +188,10 @@ const route = async function (fastify: FastifyInstance) {
       const installStrategiesWithScripts = installStrategiesAndScripts.reduce(
         (acc, segment) => {
           if (!acc.has(segment.start.elementId)) {
-            acc.set(segment.start.elementId, segment.start);
+            acc.set(segment.start.elementId, {
+              ...segment.start,
+              id: segment.start.properties.uri,
+            });
           }
 
           const start = acc.get(segment.start.elementId);
@@ -270,21 +265,52 @@ const route = async function (fastify: FastifyInstance) {
           ]?.[0];
       });
 
-      return strategies.map((strategy) => {
-        return {
-          title: strategy.properties["http://purl.org/dc/terms/title"],
-          description:
-            strategy.properties["http://purl.org/dc/terms/description"],
-          uri: strategy.properties.uri,
-          downloadURL: strategy.downloadURL,
-          scripts: strategy.scripts,
-          optionalParams: strategy.optionalArgs || [],
-          producesParams: strategy.producesParams || [],
-          runner: strategy.runner?.[0],
-        };
-      });
+      const nodes = findPaths(strategies[strategies.length - 1], strategies);
+
+      const strategiesOutput = strategies.map(strategyToOutput);
+
+      const filteredStrategies: StrategyOutput[] = [];
+
+      for (let node of nodes) {
+        const strategy = strategiesOutput.find((s) => s.uri === node.id);
+
+        if (!strategy) {
+          continue;
+        }
+
+        //  lets populate with the alternatives
+        for (let alternative of node.perfectAlternatives) {
+          const altStrategy = strategiesOutput.find(
+            (s) => s.uri === alternative.id
+          );
+
+          if (!altStrategy) {
+            continue;
+          }
+
+          strategy.alternatives.push(altStrategy);
+        }
+
+        filteredStrategies.push(strategy);
+      }
+
+      return filteredStrategies;
     }
   );
 };
+
+function strategyToOutput(strategy: Strategy): StrategyOutput {
+  return {
+    title: strategy.properties["http://purl.org/dc/terms/title"][0],
+    description: strategy.properties["http://purl.org/dc/terms/description"][0],
+    uri: strategy.id,
+    downloadURL: strategy.downloadURL,
+    scripts: strategy.scripts,
+    optionalParams: strategy.optionalArgs || [],
+    producesParams: strategy.producesParams || [],
+    alternatives: [],
+    runner: strategy.runner?.[0],
+  };
+}
 
 export default route;

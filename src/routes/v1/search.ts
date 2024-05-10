@@ -168,6 +168,10 @@ const route = async function (fastify: FastifyInstance) {
         return acc;
       }, new Map<string, PathSegment[]>());
 
+      if (reduced.size === 0) {
+        return [];
+      }
+
       const deduped = Array(...reduced.values()).map((el) => {
         if (el[0].relationship.startNodeElementId !== el[0].start.elementId) {
           const tmp = el[0].start;

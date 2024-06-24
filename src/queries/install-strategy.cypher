@@ -4,7 +4,7 @@ MATCH (end)
 WHERE end.uri = $infra
 WITH start, COLLECT(end) AS end
 CALL apoc.path.spanningTree(start, {
-  relationshipFilter: "`http://the-spm.org/schema#targetsApplication`|`http://the-spm.org/schema#usesInfrastructureProvider`>|`http://the-spm.org/schema#dependsOnSemanticApp`",
+  relationshipFilter: "`http://the-spm.org/schema#targetsApplication`|`http://the-spm.org/schema#usesInfrastructureProvider`>|`http://the-spm.org/schema#dependsOnSemanticApp`>",
   terminatorNodes: end
   } )
   YIELD path

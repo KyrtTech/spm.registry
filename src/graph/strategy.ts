@@ -1,3 +1,5 @@
+import { SupportFile } from "../schemas/install-strategy";
+
 export type StrategyArg = {
   name: string;
   param: string;
@@ -8,6 +10,7 @@ export type StrategyAddOn = {
   scripts?: string[];
   producesParams?: string[];
   runner?: string[];
+  supportFiles?: SupportFile[];
 };
 
 export type StrategyArgs = {

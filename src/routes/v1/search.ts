@@ -41,6 +41,21 @@ const searchParamsToNeo4j = (
   };
 };
 
+const addSupportFileInfo = (node: Strategy, segment: PathSegment) => {
+  if (segment.relationship.type !== "http://the-spm.org/schema#supportFiles") {
+    return;
+  }
+
+  if (!node.supportFiles) {
+    node.supportFiles = [];
+  }
+
+  node.supportFiles.push({
+    accessUrl: segment.end.properties["http://the-spm.org/entities/install-strategies/accessUrl"],
+    localPath: segment.end.properties["http://the-spm.org/entities/install-strategies/localPath"],
+  });
+};
+
 const addExtraRelInfo = (
   relType: string,
   node: Strategy,
@@ -211,6 +226,8 @@ const route = async function (fastify: FastifyInstance) {
             "scripts"
           );
 
+          addSupportFileInfo(start, segment);
+
           addArgInfo(
             "http://the-spm.org/schema#optionalArgument",
             start,
@@ -309,7 +326,8 @@ function strategyToOutput(strategy: Strategy): StrategyOutput {
     description: strategy.properties["http://purl.org/dc/terms/description"][0],
     uri: strategy.id,
     downloadURL: strategy.downloadURL,
-    scripts: strategy.scripts,
+    scripts: strategy.scripts || [],
+    supportFiles: strategy.supportFiles || [],
     optionalParams: strategy.optionalArgs || [],
     producesParams: strategy.producesParams || [],
     alternatives: [],

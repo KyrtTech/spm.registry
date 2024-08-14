@@ -3,12 +3,18 @@ export interface IFindStrategyQuery {
   infra: string;
 }
 
+export type SupportFile = {
+  accessUrl: string;
+  localPath: string;
+};
+
 export type StrategyOutput = {
   title: string;
   description: string;
   uri: string;
   downloadURL: string | undefined;
   scripts: string[] | undefined;
+  supportFiles: SupportFile[] | undefined;
   optionalParams: {
     name: string;
     param: string;
@@ -62,6 +68,16 @@ export const findInstallStrategySchema = {
             type: "array",
             items: {
               type: "string",
+            },
+          },
+          supportFiles: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                accessUrl: { type: "string" },
+                localPath: { type: "string" },
+              },
             },
           },
         },

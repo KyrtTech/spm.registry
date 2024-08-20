@@ -17,7 +17,7 @@ import {
 
 type Strategy = Node &
   StrategyAddOn &
-  StrategyArgs & { downloadURL?: string; id: string };
+  StrategyArgs & { downloadURL?: string; id: string; targets: string };
 
 const searchParamsToNeo4j = (
   type: "platform" | "install-strategy" | "infra-provider",
@@ -51,8 +51,14 @@ const addSupportFileInfo = (node: Strategy, segment: PathSegment) => {
   }
 
   node.supportFiles.push({
-    accessUrl: segment.end.properties["http://the-spm.org/entities/install-strategies/accessUrl"],
-    localPath: segment.end.properties["http://the-spm.org/entities/install-strategies/localPath"],
+    accessUrl:
+      segment.end.properties[
+        "http://the-spm.org/entities/install-strategies/accessUrl"
+      ],
+    localPath:
+      segment.end.properties[
+        "http://the-spm.org/entities/install-strategies/localPath"
+      ],
   });
 };
 
@@ -161,11 +167,15 @@ const route = async function (fastify: FastifyInstance) {
 
       const { application, infra } = req.query;
 
+      const appFullName = "http://the-spm.org/entities/services/" + application;
+      const infraFullName =
+        "http://the-spm.org/entities/cloud_providers/" + infra;
+
       const neo4jResult = await session.run(
         fastify.cypherQueries.queries["install-strategy"],
         {
-          application: "http://the-spm.org/entities/services/" + application,
-          infra: "http://the-spm.org/entities/cloud_providers/" + infra,
+          application: appFullName,
+          infra: infraFullName,
         }
       );
 
@@ -210,6 +220,7 @@ const route = async function (fastify: FastifyInstance) {
             acc.set(segment.start.elementId, {
               ...segment.start,
               id: segment.start.properties.uri,
+              targets: "",
             });
           }
 
@@ -277,16 +288,32 @@ const route = async function (fastify: FastifyInstance) {
             segment.start.elementId === id
         );
 
-        strategy.downloadURL =
+        if (
           targetAppSegment?.start.properties[
             "http://the-spm.org/schema#downloadURL"
-          ]?.[0] ||
-          targetAppSegment?.end.properties[
-            "http://the-spm.org/schema#downloadURL"
-          ]?.[0];
+          ]?.[0]
+        ) {
+          strategy.downloadURL =
+            targetAppSegment?.start.properties[
+              "http://the-spm.org/schema#downloadURL"
+            ]?.[0];
+          strategy.targets = targetAppSegment?.start.properties["uri"];
+        } else {
+          strategy.downloadURL =
+            targetAppSegment?.end.properties[
+              "http://the-spm.org/schema#downloadURL"
+            ]?.[0];
+          strategy.targets = targetAppSegment?.end.properties["uri"];
+        }
       });
 
-      const nodes = findPaths(strategies[strategies.length - 1], strategies);
+      const startStrategy = strategies.find((s) => s.targets === appFullName);
+
+      if (!startStrategy) {
+        return [];
+      }
+
+      const nodes = findPaths(startStrategy, strategies);
 
       const strategiesOutput = strategies.map(strategyToOutput);
 

@@ -120,7 +120,7 @@ export function findPaths(source: Strategy, strategies: Strategy[]): Node[] {
     });
   }
 
-  return normalized;
+  return normalized.sort((a, b) => b.rank - a.rank);
 }
 
 function doNodesProduceTheSame(a: Node, b: Node): boolean {
@@ -188,8 +188,8 @@ function normalizeAlternatives(nodes: Node[]): Node[] {
     normalized.push(node);
 
     //  mark the rest
-    for(let sibling of node.perfectAlternatives) {
-        visited.add(sibling);
+    for (let sibling of node.perfectAlternatives) {
+      visited.add(sibling);
     }
   }
 

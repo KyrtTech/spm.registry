@@ -9,5 +9,5 @@ CALL apoc.path.spanningTree(start, {
 YIELD path
 WITH [node in nodes(path) WHERE NOT EXISTS {(node)-[:`http://the-spm.org/schema#usesInfrastructureProvider`]-(neigh) WHERE neigh.uri <> $infra} ] as originalNodes
 UNWIND originalNodes as node
-MATCH p=(node)-[:`http://the-spm.org/schema#usesInfrastructureProvider`|`http://the-spm.org/schema#installScripts`|`http://the-spm.org/schema#supportFiles`|`http://the-spm.org/schema#optionalArgument`|`http://the-spm.org/schema#producesParam`|`http://the-spm.org/schema#requiresArgument`|`http://the-spm.org/schema#executedOnRunner`|`http://the-spm.org/schema#argumentType`*1..2]->(additional)
+MATCH p=(node)-[:`http://the-spm.org/schema#usesInfrastructureProvider`|`http://the-spm.org/schema#installScripts`|`http://the-spm.org/schema#supportFiles`|`http://the-spm.org/schema#optionalArgument`|`http://the-spm.org/schema#producesParam`|`http://the-spm.org/schema#requiresArgument`|`http://the-spm.org/schema#executedOnRunner`|`http://the-spm.org/schema#argumentType`|`http://the-spm.org/schema#targetsApplication`*1..2]->(additional)
 RETURN p as path

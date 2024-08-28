@@ -18,21 +18,50 @@ export const searchSchema = {
   },
   response: {
     200: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          id: {
-            type: "string",
+      type: "object",
+      properties: {
+        title: { type: "string" },
+        description: { type: "string" },
+        uri: { type: "string" },
+        downloadURL: { type: "string" },
+        optionalParams: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              name: { type: "string" },
+              param: { type: "string" },
+              description: { type: "string" },
+            },
+            required: ["name"],
           },
-          labels: {
-            type: "array",
-          },
-          uri: {
+        },
+        producesParams: { type: "array", items: { type: "string" } },
+        runner: { type: "string" },
+        scripts: {
+          type: "array",
+          items: {
             type: "string",
           },
         },
+        uninstallScripts: {
+          type: "array",
+          items: {
+            type: "string",
+          },
+        },
+        supportFiles: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              accessUrl: { type: "string" },
+              localPath: { type: "string" },
+            },
+          },
+        },
       },
+      required: ["title", "description", "scripts", "optionalParams", "uri"],
     },
   },
 };

@@ -7,7 +7,7 @@ import {
 } from "../../schemas/install-strategy";
 
 import { ISearchQuery, searchSchema } from "../../schemas/search";
-import { Node, PathSegment } from "neo4j-driver";
+import { Node, Path, PathSegment } from "neo4j-driver";
 import {
   findPaths,
   StrategyAddOn,
@@ -136,26 +136,50 @@ const route = async function (fastify: FastifyInstance) {
 
       const params = searchParamsToNeo4j(type, name);
 
-      const result = await session.run(
-        `MATCH (n:${params.label}) WHERE n.uri = $uri RETURN n LIMIT 20`,
-        { uri: params.uri }
+      const neo4jResult = await session.run(
+        fastify.cypherQueries.queries["single-strategy"],
+        { strategy: params.uri }
       );
 
-      if (result.records.length === 0) {
+      if (neo4jResult.records.length === 0) {
         return resp.code(404).send("");
       }
 
-      const mapped = result.records.map((record) => {
-        const node = record.get("n");
+      const reduced = neo4jResult.records.reduce((acc, current) => {
+        for (const segment of current.get("path")?.segments) {
+          const relId: string = segment.relationship?.elementId || "";
 
-        return {
-          id: node.identity.toInt(),
-          labels: node.labels,
-          uri: node.properties.uri,
-        };
+          if (!acc.has(relId)) {
+            acc.set(relId, []);
+          }
+
+          acc.get(relId)?.push(segment);
+        }
+
+        return acc;
+      }, new Map<string, PathSegment[]>());
+
+      const deduped = Array(...reduced.values()).map((el) => {
+        if (el[0].relationship.startNodeElementId !== el[0].start.elementId) {
+          const tmp = el[0].start;
+          el[0].start = el[0].end;
+          el[0].end = tmp;
+        }
+
+        return el[0];
       });
 
-      return mapped;
+      const installStrategy: Strategy = {
+        ...deduped[0].start,
+        id: params.uri,
+        targets: "",
+      };
+
+      deduped.forEach((segment) => {
+        enrichStrategyWithInfo(installStrategy, segment, deduped);
+      });
+
+      return strategyToOutput(installStrategy);
     }
   );
 
@@ -230,51 +254,7 @@ const route = async function (fastify: FastifyInstance) {
             return acc;
           }
 
-          addExtraRelInfo(
-            "http://the-spm.org/schema#installScripts",
-            start,
-            segment,
-            "scripts"
-          );
-
-          addExtraRelInfo(
-            "http://the-spm.org/schema#uninstallScripts",
-            start,
-            segment,
-            "uninstallScripts"
-          );
-
-          addSupportFileInfo(start, segment);
-
-          addArgInfo(
-            "http://the-spm.org/schema#optionalArgument",
-            start,
-            segment,
-            "optionalArgs",
-            deduped
-          );
-
-          addArgInfo(
-            "http://the-spm.org/schema#requiresArgument",
-            start,
-            segment,
-            "requiredArgs",
-            deduped
-          );
-
-          addExtraRelInfo(
-            "http://the-spm.org/schema#executedOnRunner",
-            start,
-            segment,
-            "runner"
-          );
-
-          addExtraRelInfo(
-            "http://the-spm.org/schema#producesParam",
-            start,
-            segment,
-            "producesParams"
-          );
+          enrichStrategyWithInfo(start, segment, deduped);
 
           return acc;
         },
@@ -353,6 +333,58 @@ const route = async function (fastify: FastifyInstance) {
     }
   );
 };
+
+function enrichStrategyWithInfo(
+  start: Strategy,
+  segment: PathSegment,
+  extra: PathSegment[]
+) {
+  addExtraRelInfo(
+    "http://the-spm.org/schema#installScripts",
+    start,
+    segment,
+    "scripts"
+  );
+
+  addExtraRelInfo(
+    "http://the-spm.org/schema#uninstallScripts",
+    start,
+    segment,
+    "uninstallScripts"
+  );
+
+  addSupportFileInfo(start, segment);
+
+  addArgInfo(
+    "http://the-spm.org/schema#optionalArgument",
+    start,
+    segment,
+    "optionalArgs",
+    extra
+  );
+
+  addArgInfo(
+    "http://the-spm.org/schema#requiresArgument",
+    start,
+    segment,
+    "requiredArgs",
+    extra
+  );
+
+  addExtraRelInfo(
+    "http://the-spm.org/schema#executedOnRunner",
+    start,
+    segment,
+    "runner"
+  );
+
+  addExtraRelInfo(
+    "http://the-spm.org/schema#producesParam",
+    start,
+    segment,
+    "producesParams"
+  );
+}
 
 function strategyToOutput(strategy: Strategy): StrategyOutput {
   return {

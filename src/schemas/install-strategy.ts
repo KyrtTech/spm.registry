@@ -14,6 +14,7 @@ export type StrategyOutput = {
   uri: string;
   downloadURL: string | undefined;
   scripts: string[] | undefined;
+  uninstallScripts: string[] | undefined;
   supportFiles: SupportFile[] | undefined;
   optionalParams: {
     name: string;
@@ -65,6 +66,12 @@ export const findInstallStrategySchema = {
           },
           runner: { type: "string" },
           scripts: {
+            type: "array",
+            items: {
+              type: "string",
+            },
+          },
+          uninstallScripts: {
             type: "array",
             items: {
               type: "string",

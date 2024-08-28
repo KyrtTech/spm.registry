@@ -8,6 +8,7 @@ export type StrategyArg = {
 
 export type StrategyAddOn = {
   scripts?: string[];
+  uninstallScripts?: string[];
   producesParams?: string[];
   runner?: string[];
   supportFiles?: SupportFile[];

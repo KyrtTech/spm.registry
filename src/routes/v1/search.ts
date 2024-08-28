@@ -237,6 +237,13 @@ const route = async function (fastify: FastifyInstance) {
             "scripts"
           );
 
+          addExtraRelInfo(
+            "http://the-spm.org/schema#uninstallScripts",
+            start,
+            segment,
+            "uninstallScripts"
+          );
+
           addSupportFileInfo(start, segment);
 
           addArgInfo(
@@ -354,6 +361,7 @@ function strategyToOutput(strategy: Strategy): StrategyOutput {
     uri: strategy.id,
     downloadURL: strategy.downloadURL,
     scripts: strategy.scripts || [],
+    uninstallScripts: strategy.uninstallScripts,
     supportFiles: strategy.supportFiles || [],
     optionalParams: strategy.optionalArgs || [],
     producesParams: strategy.producesParams || [],

@@ -184,7 +184,7 @@ const route = async function (fastify: FastifyInstance) {
   );
 
   fastify.get<{ Querystring: IFindStrategyQuery }>(
-    "/find-install-strategy",
+    "/find-install-plan",
     { schema: findInstallStrategySchema },
     async (req, resp) => {
       const session = fastify.neo4j.driver.session();

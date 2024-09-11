@@ -7,13 +7,15 @@ import {
 } from "../../schemas/install-strategy";
 
 import { ISearchQuery, searchSchema } from "../../schemas/search";
-import { Node, Path, PathSegment } from "neo4j-driver";
+import { Node, PathSegment } from "neo4j-driver";
 import {
   findPaths,
   StrategyAddOn,
   StrategyArg,
   StrategyArgs,
 } from "../../graph/strategy";
+import { DepParam } from "../../graph/dependency-params";
+import { extractValueFromNodeProperty } from "../../utils/convert";
 
 type Strategy = Node &
   StrategyAddOn &
@@ -231,6 +233,70 @@ const route = async function (fastify: FastifyInstance) {
         return el[0];
       });
 
+      const serviceLinks = deduped.filter(
+        (seg) =>
+          seg.start.properties.uri === appFullName ||
+          seg.end.properties.uri === appFullName
+      );
+
+      //  get deps
+      const serviceParamDeps = serviceLinks.filter(
+        (seg) =>
+          seg.relationship.type === "http://the-spm.org/schema#dependencyParams"
+      );
+
+      const params: DepParam[] = [];
+
+      serviceParamDeps.forEach((serviceParam) => {
+        const node = serviceParam.end.labels.some(
+          (l) => l === "http://the-spm.org/schema#ParameterDependency"
+        )
+          ? serviceParam.end
+          : serviceParam.start;
+
+        //  search for apps that the params are working on
+        const appRel = deduped.find(
+          (path) =>
+            path.relationship.type ===
+              "http://the-spm.org/schema#onApplication" &&
+            (path.end.elementId === node.elementId ||
+              path.start.elementId === node.elementId)
+        );
+
+        let appURI = "";
+
+        if (appRel) {
+          const app =
+            appRel.end.elementId === node.elementId ? appRel.start : appRel.end;
+
+          appURI = app.properties.uri;
+        }
+
+        params.push({
+          type: node.properties.uri,
+          forApp: appURI,
+          minValue: extractValueFromNodeProperty(
+            node.properties["http://the-spm.org/schema#minValue"]
+          ),
+          recommendedValue: extractValueFromNodeProperty(
+            node.properties["http://the-spm.org/schema#recommendedValue"]
+          ),
+        });
+      });
+
+      const strategiesToParams: Map<string, DepParam[]> = params.reduce(
+        (acc, param) => {
+          if (!acc.has(param.forApp)) {
+            acc.set(param.forApp, []);
+          }
+
+          acc.get(param.forApp)?.push(param);
+
+          return acc;
+        },
+        new Map()
+      );
+
       const installStrategiesAndScripts: PathSegment[] = deduped.filter(
         (segment) =>
           segment.start.labels.find(
@@ -240,8 +306,10 @@ const route = async function (fastify: FastifyInstance) {
 
       const installStrategiesWithScripts = installStrategiesAndScripts.reduce(
         (acc, segment) => {
-          if (!acc.has(segment.start.elementId)) {
-            acc.set(segment.start.elementId, {
+          const id = segment.start.elementId;
+
+          if (!acc.has(id)) {
+            acc.set(id, {
               ...segment.start,
               id: segment.start.properties.uri,
               targets: "",
@@ -301,6 +369,17 @@ const route = async function (fastify: FastifyInstance) {
       }
 
       const nodes = findPaths(startStrategy, strategies);
+
+      //  add dep params to each strategy
+      strategies.forEach((strategy) => {
+        const depParams = strategiesToParams.get(strategy.targets);
+
+        if (!depParams) {
+          return;
+        }
+
+        strategy.requirementParams = depParams;
+      });
 
       const strategiesOutput = strategies.map(strategyToOutput);
 
@@ -397,6 +476,7 @@ function strategyToOutput(strategy: Strategy): StrategyOutput {
     supportFiles: strategy.supportFiles || [],
     optionalParams: strategy.optionalArgs || [],
     producesParams: strategy.producesParams || [],
+    requirementParams: strategy.requirementParams || [],
     alternatives: [],
     runner: strategy.runner?.[0],
   };

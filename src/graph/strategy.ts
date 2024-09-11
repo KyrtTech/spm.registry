@@ -1,4 +1,5 @@
 import { SupportFile } from "../schemas/install-strategy";
+import { DepParam } from "./dependency-params";
 
 export type StrategyArg = {
   name: string;
@@ -12,6 +13,7 @@ export type StrategyAddOn = {
   producesParams?: string[];
   runner?: string[];
   supportFiles?: SupportFile[];
+  requirementParams?: DepParam[];
 };
 
 export type StrategyArgs = {

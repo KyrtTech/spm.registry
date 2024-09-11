@@ -1,3 +1,5 @@
+import { DepParam } from "../graph/dependency-params";
+
 export interface IFindStrategyQuery {
   application: string;
   infra: string;
@@ -22,6 +24,7 @@ export type StrategyOutput = {
     description?: string;
   }[];
   producesParams: string[];
+  requirementParams: DepParam[];
   alternatives: StrategyOutput[];
   runner: string | undefined;
 };
@@ -60,6 +63,18 @@ export const findInstallStrategySchema = {
             },
           },
           producesParams: { type: "array", items: { type: "string" } },
+          requirementParams: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                type: { type: "string" },
+                minValue: { type: "string" },
+                recommendedValue: { type: "string" },
+              },
+              required: ["type"],
+            },
+          },
           alternatives: {
             type: "array",
             items: { $ref: "strategyOutput" },

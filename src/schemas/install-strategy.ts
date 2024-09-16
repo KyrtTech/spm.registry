@@ -71,6 +71,7 @@ export const findInstallStrategySchema = {
                 type: { type: "string" },
                 minValue: { type: "string" },
                 recommendedValue: { type: "string" },
+                spmParam: { type: "string" },
               },
               required: ["type"],
             },

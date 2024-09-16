@@ -3,4 +3,5 @@ export type DepParam = {
   forApp: string;
   minValue: string;
   recommendedValue: string;
+  spmParam: string;
 };

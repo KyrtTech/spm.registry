@@ -272,6 +272,14 @@ const route = async function (fastify: FastifyInstance) {
           appURI = app.properties.uri;
         }
 
+        const originalParam = deduped.find(
+          (path) =>
+            path.relationship.type ===
+              "http://the-spm.org/schema#onParameter" &&
+            (path.start.elementId === node.elementId ||
+              path.end.elementId === node.elementId)
+        );
+
         params.push({
           type: node.properties.uri,
           forApp: appURI,
@@ -281,6 +289,10 @@ const route = async function (fastify: FastifyInstance) {
           recommendedValue: extractValueFromNodeProperty(
             node.properties["http://the-spm.org/schema#recommendedValue"]
           ),
+          spmParam:
+            originalParam?.end.elementId === node.elementId
+              ? originalParam?.start.properties.uri
+              : originalParam?.end.properties.uri,
         });
       });
 

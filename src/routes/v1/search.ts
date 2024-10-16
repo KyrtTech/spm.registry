@@ -242,7 +242,7 @@ const route = async function (fastify: FastifyInstance) {
       //  get deps
       const serviceParamDeps = serviceLinks.filter(
         (seg) =>
-          seg.relationship.type === "http://the-spm.org/schema#dependencyParams"
+          seg.relationship.type === "http://the-spm.org/schema#serviceHasDependencyParameter"
       );
 
       const params: DepParam[] = [];

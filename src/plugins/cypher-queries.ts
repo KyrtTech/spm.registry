@@ -5,6 +5,7 @@ type Queries = {
   "install-strategy": string;
   "get-runner": string;
   "single-strategy": string;
+  "infra-providers": string;
 };
 
 // Plugin to read cypher queries from fs
@@ -16,6 +17,7 @@ const cypherQueriesPlugin = fp(
       "install-strategy": "",
       "get-runner": "",
       "single-strategy": "",
+      "infra-providers": ""
     };
 
     for await (const file of files) {

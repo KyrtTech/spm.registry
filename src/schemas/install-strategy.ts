@@ -29,6 +29,71 @@ export type StrategyOutput = {
   runner: string | undefined;
 };
 
+export const StrategyOutputSchema = {
+  $id: "strategyOutput",
+  type: "object",
+  properties: {
+    title: { type: "string" },
+    description: { type: "string" },
+    uri: { type: "string" },
+    downloadURL: { type: "string" },
+    optionalParams: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          name: { type: "string" },
+          param: { type: "string" },
+          description: { type: "string" },
+        },
+        required: ["name"],
+      },
+    },
+    producesParams: { type: "array", items: { type: "string" } },
+    requirementParams: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          type: { type: "string" },
+          minValue: { type: "string" },
+          recommendedValue: { type: "string" },
+          spmParam: { type: "string" },
+        },
+        required: ["type"],
+      },
+    },
+    alternatives: {
+      type: "array",
+      items: { $ref: "strategyOutput" },
+    },
+    runner: { type: "string" },
+    scripts: {
+      type: "array",
+      items: {
+        type: "string",
+      },
+    },
+    uninstallScripts: {
+      type: "array",
+      items: {
+        type: "string",
+      },
+    },
+    supportFiles: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          accessUrl: { type: "string" },
+          localPath: { type: "string" },
+        },
+      },
+    },
+  },
+  required: ["title", "description", "scripts", "optionalParams", "uri"],
+}
+
 export const findInstallStrategySchema = {
   querystring: {
     type: "object",
@@ -42,70 +107,7 @@ export const findInstallStrategySchema = {
   response: {
     200: {
       type: "array",
-      items: {
-        $id: "strategyOutput",
-        type: "object",
-        properties: {
-          title: { type: "string" },
-          description: { type: "string" },
-          uri: { type: "string" },
-          downloadURL: { type: "string" },
-          optionalParams: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                name: { type: "string" },
-                param: { type: "string" },
-                description: { type: "string" },
-              },
-              required: ["name"],
-            },
-          },
-          producesParams: { type: "array", items: { type: "string" } },
-          requirementParams: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                type: { type: "string" },
-                minValue: { type: "string" },
-                recommendedValue: { type: "string" },
-                spmParam: { type: "string" },
-              },
-              required: ["type"],
-            },
-          },
-          alternatives: {
-            type: "array",
-            items: { $ref: "strategyOutput" },
-          },
-          runner: { type: "string" },
-          scripts: {
-            type: "array",
-            items: {
-              type: "string",
-            },
-          },
-          uninstallScripts: {
-            type: "array",
-            items: {
-              type: "string",
-            },
-          },
-          supportFiles: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                accessUrl: { type: "string" },
-                localPath: { type: "string" },
-              },
-            },
-          },
-        },
-        required: ["title", "description", "scripts", "optionalParams", "uri"],
-      },
+      items: { $ref: "strategyOutput"},
     },
   },
 };

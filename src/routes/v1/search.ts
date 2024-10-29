@@ -3,6 +3,7 @@ import { FastifyInstance } from "fastify";
 import {
   IFindStrategyQuery,
   StrategyOutput,
+  StrategyOutputSchema,
   findInstallStrategySchema,
 } from "../../schemas/install-strategy";
 
@@ -128,6 +129,8 @@ const addArgInfo = (
 };
 
 const route = async function (fastify: FastifyInstance) {
+  fastify.addSchema(StrategyOutputSchema);
+
   fastify.get<{ Querystring: ISearchQuery }>(
     "/search",
     { schema: searchSchema },

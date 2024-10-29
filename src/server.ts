@@ -28,7 +28,7 @@ app.register(require("@fastify/swagger"), {
 });
 
 app.register(require("@fastify/swagger-ui"), {
-  routePrefix: "/docs",
+  routePrefix: "/v1/docs",
   uiConfig: {
     docExpansion: "full",
     deepLinking: false,

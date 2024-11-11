@@ -70,7 +70,7 @@ const routes = async (fastify: FastifyInstance) => {
   fastify.get(
     "/infra-provider/:name",
     { schema: InfraProviderSchema },
-    async (request) => {
+    async (request, reply) => {
       const session = fastify.neo4j.driver.session();
 
       const response = await session.run(
@@ -81,6 +81,11 @@ const routes = async (fastify: FastifyInstance) => {
           }`,
         }
       );
+
+      if (response.records.length === 0) {
+        reply.code(404);
+        return;
+      }
 
       const firstNode = response.records[0];
 

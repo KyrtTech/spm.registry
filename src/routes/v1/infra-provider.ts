@@ -1,7 +1,10 @@
 import { FastifyInstance } from "fastify";
 import { RecordShape, Record as Neo4jRecord } from "neo4j-driver";
 
-import { InfraProvidersSchema } from "../../schemas/infra-provider";
+import {
+  InfraProviderSchema,
+  InfraProvidersSchema,
+} from "../../schemas/infra-provider";
 
 type ProviderSource = {
   provider: RecordShape;
@@ -61,6 +64,44 @@ const routes = async (fastify: FastifyInstance) => {
           )
           .values(),
       ].map(recordToProvider);
+    }
+  );
+
+  fastify.get(
+    "/infra-provider/:name",
+    { schema: InfraProviderSchema },
+    async (request) => {
+      const session = fastify.neo4j.driver.session();
+
+      const response = await session.run(
+        fastify.cypherQueries.queries["infra-provider"],
+        {
+          provider: `http://the-spm.org/entities/cloud_providers/${
+            (request.params as any).name
+          }`,
+        }
+      );
+
+      const firstNode = response.records[0];
+
+      const provider: ProviderSource = {
+        provider: firstNode.get("provider"),
+        config: new Map(),
+        logo: firstNode.get("logo"),
+      };
+
+      response.records.forEach((node) => {
+        if (!node.get("param")) {
+          return;
+        }
+
+        provider.config.set(
+          node.get("param").properties["uri"],
+          node.get("values")
+        );
+      });
+
+      return recordToProvider(provider);
     }
   );
 };

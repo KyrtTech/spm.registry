@@ -10,6 +10,7 @@ const InfraProvider = {
         type: "object",
         properties: {
           name: { type: "string" },
+          isBuildable: { type: "boolean" },
           values: {
             type: "array",
             items: {

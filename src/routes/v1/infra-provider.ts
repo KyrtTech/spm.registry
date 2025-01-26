@@ -8,7 +8,7 @@ import {
 
 type ProviderSource = {
   provider: RecordShape;
-  config: Map<string, RecordShape[]>;
+  config: Map<string, { values: RecordShape[]; isBuildable: boolean }>;
   logo: RecordShape;
 };
 
@@ -53,10 +53,13 @@ const routes = async (fastify: FastifyInstance) => {
 
               const bag = acc.get(name);
 
-              bag?.config.set(
-                node.get("param").properties["uri"],
-                node.get("values")
-              );
+              bag?.config.set(node.get("param").properties["uri"], {
+                values: node.get("values"),
+                isBuildable:
+                  node.get("param").properties[
+                    "http://the-spm.org/schema#isBuildable"
+                  ]?.[0] || false,
+              });
 
               return acc;
             },
@@ -100,10 +103,13 @@ const routes = async (fastify: FastifyInstance) => {
           return;
         }
 
-        provider.config.set(
-          node.get("param").properties["uri"],
-          node.get("values")
-        );
+        provider.config.set(node.get("param").properties["uri"], {
+          values: node.get("values"),
+          isBuildable:
+            node.get("param").properties[
+              "http://the-spm.org/schema#isBuildable"
+            ]?.[0] || false,
+        });
       });
 
       return recordToProvider(provider);
@@ -119,7 +125,8 @@ const recordToProvider = (node: ProviderSource) => {
     logo: node.logo.properties["uri"],
     config: [...node.config.entries()].map((entry) => ({
       name: entry[0],
-      values: entry[1].map((val) => ({
+      isBuildable: entry[1].isBuildable,
+      values: entry[1].values.map((val) => ({
         name: val.properties["http://purl.org/dc/terms/title"],
         uri: val.properties["uri"],
       })),

@@ -21,6 +21,7 @@ export type StrategyOutput = {
   optionalParams: {
     name: string;
     param: string;
+    values: string[];
     description?: string;
   }[];
   producesParams: string[];
@@ -44,6 +45,7 @@ export const StrategyOutputSchema = {
         properties: {
           name: { type: "string" },
           param: { type: "string" },
+          values: { type: "array", items: { type: "string" } },
           description: { type: "string" },
         },
         required: ["name"],
@@ -92,7 +94,7 @@ export const StrategyOutputSchema = {
     },
   },
   required: ["title", "description", "scripts", "optionalParams", "uri"],
-}
+};
 
 export const findInstallStrategySchema = {
   querystring: {
@@ -107,7 +109,7 @@ export const findInstallStrategySchema = {
   response: {
     200: {
       type: "array",
-      items: { $ref: "strategyOutput"},
+      items: { $ref: "strategyOutput" },
     },
   },
 };

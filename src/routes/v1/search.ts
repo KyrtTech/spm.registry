@@ -106,8 +106,22 @@ const addArgInfo = (
           s.end.elementId === argNode.elementId)
     );
 
+    //  find allowedValues
+    const allowedValues = deduped.filter(
+      (s) =>
+        s.relationship.type === "http://the-spm.org/schema#allowedValues" &&
+        (s.start.elementId === argNode.elementId ||
+          s.end.elementId === argNode.elementId)
+    );
+
     const newElem: StrategyArg = {
       name: segment.end.properties["uri"],
+      values: allowedValues.map((s) => {
+        const paramNode =
+          s.start.elementId === argNode.elementId ? s.end : s.start;
+
+        return paramNode.properties["uri"];
+      }),
       param: "",
     };
 
@@ -245,7 +259,8 @@ const route = async function (fastify: FastifyInstance) {
       //  get deps
       const serviceParamDeps = serviceLinks.filter(
         (seg) =>
-          seg.relationship.type === "http://the-spm.org/schema#serviceHasDependencyParameter"
+          seg.relationship.type ===
+          "http://the-spm.org/schema#serviceHasDependencyParameter"
       );
 
       const params: DepParam[] = [];

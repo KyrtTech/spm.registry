@@ -4,6 +4,7 @@ import { DepParam } from "./dependency-params";
 export type StrategyArg = {
   name: string;
   param: string;
+  values: string[];
   description?: string;
 };
 

@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 import fastify from "fastify";
+import cors from "@fastify/cors";
 
 import neo4jPlugin from "./plugins/neo4j";
 import cypherQueriesPlugin from "./plugins/cypher-queries";
@@ -7,6 +8,11 @@ import cypherQueriesPlugin from "./plugins/cypher-queries";
 dotenv.config();
 
 const app = fastify({ logger: true });
+
+app.register(cors, {
+  origin: '*',
+  methods: 'GET'
+})
 
 app.register(require("@fastify/swagger"), {
   openapi: {

@@ -39,9 +39,13 @@ export const InfraProvidersSchema = {
 
 export const InfraProviderSchema = {
   params: {
-    name: {
-      type: "string",
+    type: 'object',
+    properties: {
+      name: {
+        type: "string",
+      },
     },
+    required: ['name']
   },
   response: {
     200: InfraProvider,

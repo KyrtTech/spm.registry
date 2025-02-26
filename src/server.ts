@@ -10,9 +10,9 @@ dotenv.config();
 const app = fastify({ logger: true });
 
 app.register(cors, {
-  origin: '*',
-  methods: 'GET'
-})
+  origin: "*",
+  methods: "GET",
+});
 
 app.register(require("@fastify/swagger"), {
   openapi: {
@@ -65,6 +65,7 @@ app.register(cypherQueriesPlugin);
 app.register(import("./routes/v1/search"), { prefix: "v1" });
 app.register(import("./routes/v1/infra-provider"), { prefix: "v1" });
 app.register(import("./routes/v1/runner"), { prefix: "v1" });
+app.register(import("./routes/v1/services"), { prefix: "v1" });
 
 const start = async () => {
   try {

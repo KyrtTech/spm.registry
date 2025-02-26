@@ -210,9 +210,9 @@ const route = async function (fastify: FastifyInstance) {
 
       const { application, infra } = req.query;
 
-      const appFullName = "http://the-spm.org/entities/services/" + application;
+      const appFullName = "http://the-spm.org/entities/services#" + application;
       const infraFullName =
-        "http://the-spm.org/entities/cloud_providers/" + infra;
+        "http://the-spm.org/entities/cloud_providers#" + infra;
 
       const neo4jResult = await session.run(
         fastify.cypherQueries.queries["install-strategy"],

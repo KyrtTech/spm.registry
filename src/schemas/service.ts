@@ -14,8 +14,10 @@ const Service = {
             name: {type: "string"},
             uri: {type: "string"},
             version: {type: "string"},
+            logo: {type: "string"}
           }
-        }
+        },
+        required: ['name', 'uri']
       }
     },
   };

@@ -2,6 +2,7 @@ const InfraProvider = {
   type: "object",
   properties: {
     name: { type: "string" },
+    title: { type: "string" },
     description: { type: "string" },
     logo: { type: "string" },
     config: {

@@ -34,12 +34,12 @@ const searchParamsToNeo4j = (
 
   const typeToURI = {
     platform: "platforms",
-    "install-strategy": "install-strategies",
-    "infra-provider": "cloud-providers",
+    "install-strategy": "install_strategies",
+    "infra-provider": "cloud_providers",
   };
 
   return {
-    uri: `http://the-spm.org/entities/${typeToURI[type]}/${name}`,
+    uri: `http://the-spm.org/entities/${typeToURI[type]}#${name}`,
     label: `\`http://the-spm.org/schema#${typeToFragment[type]}\``,
   };
 };
@@ -56,11 +56,11 @@ const addSupportFileInfo = (node: Strategy, segment: PathSegment) => {
   node.supportFiles.push({
     accessUrl:
       segment.end.properties[
-        "http://the-spm.org/entities/install-strategies/accessUrl"
+        "http://the-spm.org/entities/install-strategies#accessUrl"
       ],
     localPath:
       segment.end.properties[
-        "http://the-spm.org/entities/install-strategies/localPath"
+        "http://the-spm.org/entities/install-strategies#localPath"
       ],
   });
 };

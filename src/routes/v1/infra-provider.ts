@@ -79,7 +79,7 @@ const routes = async (fastify: FastifyInstance) => {
       const response = await session.run(
         fastify.cypherQueries.queries["infra-provider"],
         {
-          provider: `http://the-spm.org/entities/cloud_providers/${
+          provider: `http://the-spm.org/entities/cloud_providers#${
             (request.params as any).name
           }`,
         }
@@ -119,7 +119,8 @@ const routes = async (fastify: FastifyInstance) => {
 
 const recordToProvider = (node: ProviderSource) => {
   return {
-    name: node.provider.properties["http://purl.org/dc/terms/title"][0],
+    title: node.provider.properties["http://purl.org/dc/terms/title"][0],
+    name: node.provider.properties["uri"].split("#")[1],
     description:
       node.provider.properties["http://purl.org/dc/terms/description"][0],
     logo: node.logo.properties["uri"],

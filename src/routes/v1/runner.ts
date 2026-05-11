@@ -18,7 +18,7 @@ const route = async function (fastify: FastifyInstance) {
         fastify.cypherQueries.queries["get-runner"],
         {
           runnerName:
-            "http://the-spm.org/entities/runners/" + req.params.runnerName,
+            "http://the-spm.org/entities/runners#" + req.params.runnerName,
         }
       );
 

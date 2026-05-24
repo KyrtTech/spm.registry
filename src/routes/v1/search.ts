@@ -56,11 +56,11 @@ const addSupportFileInfo = (node: Strategy, segment: PathSegment) => {
   node.supportFiles.push({
     accessUrl:
       segment.end.properties[
-        "http://the-spm.org/entities/install-strategies#accessUrl"
+        "http://the-spm.org/entities/install_strategies#accessUrl"
       ],
     localPath:
       segment.end.properties[
-        "http://the-spm.org/entities/install-strategies#localPath"
+        "http://the-spm.org/entities/install_strategies#localPath"
       ],
   });
 };

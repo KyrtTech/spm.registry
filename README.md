@@ -115,3 +115,7 @@ WHERE app.semverKey >= req.minSemverKey
 RETURN req, family, app, strategy
 ORDER BY req.uri, app.semverKey DESC;
 ```
+
+## License
+
+This project is licensed under the [Apache License, Version 2.0](LICENSE).

@@ -1,6 +1,8 @@
 // Reload ontology data.
 MATCH (n:!_GraphConfig) DETACH DELETE n;
 
+// Replace path_to with the actual path to the ontology files.
+
 CALL n10s.rdf.import.fetch("path_to/spm.knowledge_domain/ontology/entities/package_manager.ttl", "Turtle");
 CALL n10s.rdf.import.fetch("path_to/spm/spm.knowledge_domain/ontology/entities/platforms.ttl", "Turtle");
 CALL n10s.rdf.import.fetch("path_to/spm/spm.knowledge_domain/ontology/entities/cloud_service.ttl", "Turtle");

@@ -5,6 +5,7 @@ import {
   InfraProviderSchema,
   InfraProvidersSchema,
 } from "../../schemas/infra-provider";
+import { extractValueFromNodeProperty } from "../../utils/convert";
 
 type ProviderSource = {
   provider: RecordShape;
@@ -35,9 +36,9 @@ const routes = async (fastify: FastifyInstance) => {
               >
             ) => {
               const name =
-                node.get("provider").properties[
+                extractValueFromNodeProperty(node.get("provider").properties[
                   "http://purl.org/dc/terms/title"
-                ][0];
+                ]);
 
               if (!acc.has(name)) {
                 acc.set(name, {
@@ -56,9 +57,9 @@ const routes = async (fastify: FastifyInstance) => {
               bag?.config.set(node.get("param").properties["uri"], {
                 values: node.get("values"),
                 isBuildable:
-                  node.get("param").properties[
+                  extractValueFromNodeProperty(node.get("param").properties[
                     "http://the-spm.org/schema#isBuildable"
-                  ]?.[0] || false,
+                  ]) || false,
               });
 
               return acc;
@@ -106,9 +107,9 @@ const routes = async (fastify: FastifyInstance) => {
         provider.config.set(node.get("param").properties["uri"], {
           values: node.get("values"),
           isBuildable:
-            node.get("param").properties[
+            extractValueFromNodeProperty(node.get("param").properties[
               "http://the-spm.org/schema#isBuildable"
-            ]?.[0] || false,
+            ]) || false,
         });
       });
 
@@ -119,16 +120,16 @@ const routes = async (fastify: FastifyInstance) => {
 
 const recordToProvider = (node: ProviderSource) => {
   return {
-    title: node.provider.properties["http://purl.org/dc/terms/title"][0],
+    title: extractValueFromNodeProperty(node.provider.properties["http://purl.org/dc/terms/title"]),
     name: node.provider.properties["uri"].split("#")[1],
     description:
-      node.provider.properties["http://purl.org/dc/terms/description"][0],
+      extractValueFromNodeProperty(node.provider.properties["http://purl.org/dc/terms/description"]),
     logo: node.logo.properties["uri"],
     config: [...node.config.entries()].map((entry) => ({
       name: entry[0],
       isBuildable: entry[1].isBuildable,
       values: entry[1].values.map((val) => ({
-        name: val.properties["http://purl.org/dc/terms/title"],
+        name: extractValueFromNodeProperty(val.properties["http://purl.org/dc/terms/title"]),
         uri: val.properties["uri"],
       })),
     })),

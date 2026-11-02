@@ -1,6 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { RecordShape, Record as Neo4jRecord } from "neo4j-driver";
 import { ServicesSchema } from "../../schemas/service";
+import { extractValueFromNodeProperty } from "../../utils/convert";
 
 type ServiceSource = {
   service: RecordShape;
@@ -26,7 +27,7 @@ const routes = async (fastify: FastifyInstance) => {
         >
       ) => {
         const name =
-          node.get("service").properties["http://purl.org/dc/terms/title"][0];
+          extractValueFromNodeProperty(node.get("service").properties["http://purl.org/dc/terms/title"]);
 
         if (!acc.has(name)) {
           acc.set(name, {
@@ -53,17 +54,17 @@ const routes = async (fastify: FastifyInstance) => {
 
 const recordToService = (node: ServiceSource) => {
   return {
-    name: node.service.properties["http://purl.org/dc/terms/title"][0],
+    name: extractValueFromNodeProperty(node.service.properties["http://purl.org/dc/terms/title"]),
     description:
-      node.service.properties["http://purl.org/dc/terms/description"]?.[0],
+      extractValueFromNodeProperty(node.service.properties["http://purl.org/dc/terms/description"]),
     version:
-      node.service.properties["http://the-spm.org/schema#hasSemanticVersion"]?.[0],
+      extractValueFromNodeProperty(node.service.properties["http://the-spm.org/schema#hasSemanticVersion"]),
     logo: node.logo.properties["uri"],
-    downloadUrl: node.service.properties["http://the-spm.org/schema#downloadURL"]?.[0],
+    downloadUrl: extractValueFromNodeProperty(node.service.properties["http://the-spm.org/schema#downloadURL"]),
     dependsOn: node.dependson.map(dep => ({
-      name: dep.properties["http://purl.org/dc/terms/title"]?.[0],
+      name: extractValueFromNodeProperty(dep.properties["http://purl.org/dc/terms/title"]),
       uri: dep.properties["uri"],
-      version: dep.properties["http://the-spm.org/schema#hasSemanticVersion"]?.[0]
+      version: extractValueFromNodeProperty(dep.properties["http://the-spm.org/schema#hasSemanticVersion"])
     }))
   };
 };

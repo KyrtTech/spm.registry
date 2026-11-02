@@ -31,6 +31,13 @@ Run `npm run dev`.
 
 Ontology data is loaded into Neo4j from the Turtle files in `spm.knowledge_domain` using the Neo4j neosemantics (`n10s`) plugin. A reusable Cypher script is available at `scripts/import-ontology.cypher`.
 
+The script wipes the graph and pins the `n10s` graph config, because the API depends on how literal values are stored:
+
+- **Human-readable text** (`dcterms:title`, `dcterms:description`, `dcterms:alternative`, `schema:alternateName`, `rdfs:label`, `rdfs:comment`) is stored as a **list**, since the knowledge domain allows one value per language. Language tags are dropped (`keepLangTag: false`).
+- **Every other literal** is stored as a **scalar** (`handleMultival: 'ARRAY'` with an explicit `multivalPropList`). These are the properties marked `owl:FunctionalProperty` in `spm.knowledge_domain`, such as versions, URLs, sizes and flags.
+
+Routes read node properties through `extractValueFromNodeProperty` (`src/utils/convert.ts`), which accepts either form. Do not index properties with `[0]` directly: on a scalar string that returns its first character.
+
 The ontology keeps semantic versions as domain values, for example `spm:hasSemanticVersion`, `spm:minSemanticVersion`, and `spm:maxSemanticVersion`. Neo4j import should enrich those values with query-only padded key properties so Cypher can compare versions efficiently.
 
 After running the `n10s.rdf.import.fetch(...)` calls, run the following post-import step:
@@ -39,7 +46,7 @@ After running the `n10s.rdf.import.fetch(...)` calls, run the following post-imp
 // Concrete versioned applications, platforms, runners, etc.
 MATCH (n)
 WHERE n.`http://the-spm.org/schema#hasSemanticVersion` IS NOT NULL
-WITH n, n.`http://the-spm.org/schema#hasSemanticVersion`[0] AS version
+WITH n, n.`http://the-spm.org/schema#hasSemanticVersion` AS version
 WHERE version =~ '^\\d+(\\.\\d+){0,2}$'
 WITH n, split(version, '.') AS parts
 WITH n,
@@ -57,7 +64,7 @@ SET n.semverMajor = major,
 // Dependency requirement minimum versions.
 MATCH (req)
 WHERE req.`http://the-spm.org/schema#minSemanticVersion` IS NOT NULL
-WITH req, req.`http://the-spm.org/schema#minSemanticVersion`[0] AS version
+WITH req, req.`http://the-spm.org/schema#minSemanticVersion` AS version
 WHERE version =~ '^\\d+(\\.\\d+){0,2}$'
 WITH req, split(version, '.') AS parts
 WITH req,
@@ -75,7 +82,7 @@ SET req.minSemverMajor = major,
 // Dependency requirement maximum versions.
 MATCH (req)
 WHERE req.`http://the-spm.org/schema#maxSemanticVersion` IS NOT NULL
-WITH req, req.`http://the-spm.org/schema#maxSemanticVersion`[0] AS version
+WITH req, req.`http://the-spm.org/schema#maxSemanticVersion` AS version
 WHERE version =~ '^\\d+(\\.\\d+){0,2}$'
 WITH req, split(version, '.') AS parts
 WITH req,

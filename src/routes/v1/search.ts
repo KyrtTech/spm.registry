@@ -54,14 +54,16 @@ const addSupportFileInfo = (node: Strategy, segment: PathSegment) => {
   }
 
   node.supportFiles.push({
-    accessUrl:
+    accessUrl: extractValueFromNodeProperty(
       segment.end.properties[
         "http://the-spm.org/entities/install_strategies#accessUrl"
-      ],
-    localPath:
+      ]
+    ),
+    localPath: extractValueFromNodeProperty(
       segment.end.properties[
         "http://the-spm.org/entities/install_strategies#localPath"
-      ],
+      ]
+    ),
   });
 };
 
@@ -133,9 +135,9 @@ const addArgInfo = (
 
       newElem.param = paramNode.properties["uri"];
       newElem.description =
-        argNode.properties[
+        extractValueFromNodeProperty(argNode.properties[
           "http://the-spm.org/schema#argumentDescription"
-        ]?.[0];
+        ]);
     }
 
     whereToPush.push(newElem);
@@ -374,20 +376,20 @@ const route = async function (fastify: FastifyInstance) {
         );
 
         if (
-          targetAppSegment?.start.properties[
+          extractValueFromNodeProperty(targetAppSegment?.start.properties[
             "http://the-spm.org/schema#downloadURL"
-          ]?.[0]
+          ])
         ) {
           strategy.downloadURL =
-            targetAppSegment?.start.properties[
+            extractValueFromNodeProperty(targetAppSegment?.start.properties[
               "http://the-spm.org/schema#downloadURL"
-            ]?.[0];
+            ]);
           strategy.targets = targetAppSegment?.start.properties["uri"];
         } else {
           strategy.downloadURL =
-            targetAppSegment?.end.properties[
+            extractValueFromNodeProperty(targetAppSegment?.end.properties[
               "http://the-spm.org/schema#downloadURL"
-            ]?.[0];
+            ]);
           strategy.targets = targetAppSegment?.end.properties["uri"];
         }
       });
@@ -497,8 +499,8 @@ function enrichStrategyWithInfo(
 
 function strategyToOutput(strategy: Strategy): StrategyOutput {
   return {
-    title: strategy.properties["http://purl.org/dc/terms/title"][0],
-    description: strategy.properties["http://purl.org/dc/terms/description"][0],
+    title: extractValueFromNodeProperty(strategy.properties["http://purl.org/dc/terms/title"]),
+    description: extractValueFromNodeProperty(strategy.properties["http://purl.org/dc/terms/description"]),
     uri: strategy.id,
     downloadURL: strategy.downloadURL,
     scripts: strategy.scripts || [],

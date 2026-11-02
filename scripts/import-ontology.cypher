@@ -1,5 +1,26 @@
 // Reload ontology data.
-MATCH (n:!_GraphConfig) DETACH DELETE n;
+// n10s only accepts a new graph config on an empty graph, so the config node is removed too.
+MATCH (n) DETACH DELETE n;
+
+CREATE CONSTRAINT n10s_unique_uri IF NOT EXISTS
+FOR (r:Resource) REQUIRE r.uri IS UNIQUE;
+
+// Human-readable text may repeat (once per language) and is stored as a list.
+// Every other literal property is single-valued (owl:FunctionalProperty in
+// spm.knowledge_domain) and is stored as a scalar.
+CALL n10s.graphconfig.init({
+  handleVocabUris: 'KEEP',
+  handleMultival: 'ARRAY',
+  multivalPropList: [
+    'http://purl.org/dc/terms/title',
+    'http://purl.org/dc/terms/description',
+    'http://purl.org/dc/terms/alternative',
+    'http://schema.org/alternateName',
+    'http://www.w3.org/2000/01/rdf-schema#label',
+    'http://www.w3.org/2000/01/rdf-schema#comment'
+  ],
+  keepLangTag: false
+});
 
 // Replace path_to with the actual path to the ontology files.
 
@@ -20,7 +41,7 @@ CALL n10s.rdf.import.fetch("path_to/spm/spm.knowledge_domain/ontology/entities/r
 // efficient lexical comparisons. Missing minor or patch values are treated as 0.
 MATCH (n)
 WHERE n.`http://the-spm.org/schema#hasSemanticVersion` IS NOT NULL
-WITH n, n.`http://the-spm.org/schema#hasSemanticVersion`[0] AS version
+WITH n, n.`http://the-spm.org/schema#hasSemanticVersion` AS version
 WHERE version =~ '^\\d+(\\.\\d+){0,2}$'
 WITH n, split(version, '.') AS parts
 WITH n,
@@ -38,7 +59,7 @@ SET n.semverMajor = major,
 // Dependency requirement minimum versions.
 MATCH (req)
 WHERE req.`http://the-spm.org/schema#minSemanticVersion` IS NOT NULL
-WITH req, req.`http://the-spm.org/schema#minSemanticVersion`[0] AS version
+WITH req, req.`http://the-spm.org/schema#minSemanticVersion` AS version
 WHERE version =~ '^\\d+(\\.\\d+){0,2}$'
 WITH req, split(version, '.') AS parts
 WITH req,
@@ -56,7 +77,7 @@ SET req.minSemverMajor = major,
 // Dependency requirement maximum versions.
 MATCH (req)
 WHERE req.`http://the-spm.org/schema#maxSemanticVersion` IS NOT NULL
-WITH req, req.`http://the-spm.org/schema#maxSemanticVersion`[0] AS version
+WITH req, req.`http://the-spm.org/schema#maxSemanticVersion` AS version
 WHERE version =~ '^\\d+(\\.\\d+){0,2}$'
 WITH req, split(version, '.') AS parts
 WITH req,

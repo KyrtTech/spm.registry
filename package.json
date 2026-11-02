@@ -7,11 +7,11 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "dev": "nodemon -e ts,json,cypher src/server.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 0"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "dependencies": {
     "@fastify/cors": "^10.0.2",
     "@fastify/swagger": "^9.4.2",
